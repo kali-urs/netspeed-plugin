@@ -51,10 +51,6 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     Dtk${DTK_VERSION_MAJOR}::Gui
 )
 
-if(DdeTrayLoader_FOUND AND OPT_ENABLE_QT6)
-    target_link_libraries(${PROJECT_NAME} PRIVATE DdeTrayLoader::DdeTrayLoader)
-endif()
-
 install(TARGETS ${PROJECT_NAME}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}/dde-dock/plugins
 )
