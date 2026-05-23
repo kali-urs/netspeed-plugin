@@ -30,8 +30,9 @@ endif()
 
 find_package(Qt${QT_VERSION_MAJOR} COMPONENTS DBus Widgets REQUIRED)
 find_package(Dtk${DTK_VERSION_MAJOR} COMPONENTS Core Gui REQUIRED)
-file(GLOB_RECURSE SRCS CONFIGURE_DEPENDS "*.h" "*.hpp" "*.cpp" "*.ui")
+find_package(DdeTrayLoader QUIET)
 
+file(GLOB_RECURSE SRCS CONFIGURE_DEPENDS "*.h" "*.hpp" "*.cpp" "*.ui")
 add_library(${PROJECT_NAME} MODULE ${SRCS})
 set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME ${PLUGIN_NAME})
 
@@ -49,10 +50,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     Dtk${DTK_VERSION_MAJOR}::Gui
 )
 
-find_package(DdeTrayLoader QUIET)
-if(DdeTrayLoader_FOUND)
-    target_include_directories(${PROJECT_NAME} PRIVATE ${DdeTrayLoader_INCLUDE_DIRS})
-endif()
+
 
 install(TARGETS ${PROJECT_NAME}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}/dde-dock/plugins
