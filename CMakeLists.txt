@@ -32,8 +32,6 @@ find_package(Qt${QT_VERSION_MAJOR} COMPONENTS DBus Widgets REQUIRED)
 find_package(Dtk${DTK_VERSION_MAJOR} COMPONENTS Core Gui REQUIRED)
 find_package(DdeTrayLoader QUIET)
 
-find_package(PkgConfig REQUIRED)
-
 file(GLOB_RECURSE SRCS CONFIGURE_DEPENDS "*.h" "*.hpp" "*.cpp" "*.ui")
 
 add_library(${PROJECT_NAME} MODULE ${SRCS})
