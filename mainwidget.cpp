@@ -1,5 +1,5 @@
 #include "mainwidget.h"
-#include <DGuiApplicationHelper>
+#include <QPalette>
 
 MainWidget::MainWidget(Dock::Position position)
     : m_upLabel(nullptr)
@@ -25,6 +25,11 @@ MainWidget::MainWidget(Dock::Position position)
     m_layout->setSpacing(4);
     setLayout(m_layout);
 
+    setAutoFillBackground(true);
+    QPalette pal = palette();
+    pal.setColor(QPalette::Window, Qt::transparent);
+    setPalette(pal);
+
     updateSpeed({0, 0, "0 B/s", "0 B/s"}, position);
 }
 
@@ -49,10 +54,9 @@ void MainWidget::updateSpeed(const NetSpeedInfo &info, Dock::Position position)
     m_upLabel->setFont(m_font);
     m_downLabel->setFont(m_font);
 
-    auto *helper = DGuiApplicationHelper::instance();
-    bool isLight = (helper->themeType() == DGuiApplicationHelper::LightType);
-    QString color = isLight ? "#000000" : "#ffffff";
-    QString style = QString("QLabel { color: %1; }").arg(color);
+    QColor textColor = palette().color(QPalette::WindowText);
+    QString colorName = textColor.name();
+    QString style = QString("QLabel { color: %1; }").arg(colorName);
     m_upLabel->setStyleSheet(style);
     m_downLabel->setStyleSheet(style);
 
