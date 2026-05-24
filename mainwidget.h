@@ -3,7 +3,7 @@
 
 #include <QWidget>
 #include <QLabel>
-#include <QBoxLayout>
+#include <QGridLayout>
 #include <QScreen>
 #include <QApplication>
 #include <pluginsiteminterface.h>
@@ -21,14 +21,16 @@ public:
     QSize sizeHint() const override;
 
 private:
-    int fixedWidth() const;
+    void parseSpeed(const QString &speed, QString &num, QString &unit) const;
 
-    QLabel *m_upLabel;
-    QLabel *m_downLabel;
-    QBoxLayout *m_layout;
+    QLabel *m_upNum;
+    QLabel *m_upUnit;
+    QLabel *m_downNum;
+    QLabel *m_downUnit;
+    QGridLayout *m_layout;
     QFont m_font;
     int m_dpi;
-    int m_fixedW;
+    int m_numWidth;
     Dock::Position m_position;
 };
 
