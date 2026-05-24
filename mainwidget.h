@@ -21,11 +21,14 @@ public:
     QSize sizeHint() const override;
 
 private:
+    int fixedWidth() const;
+
     QLabel *m_upLabel;
     QLabel *m_downLabel;
     QBoxLayout *m_layout;
     QFont m_font;
     int m_dpi;
+    int m_fixedW;
     Dock::Position m_position;
 };
 

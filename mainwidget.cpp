@@ -5,10 +5,15 @@ MainWidget::MainWidget(Dock::Position position)
     : m_upLabel(nullptr)
     , m_downLabel(nullptr)
     , m_layout(nullptr)
+    , m_fixedW(0)
     , m_position(position)
 {
     m_dpi = QApplication::primaryScreen()->logicalDotsPerInch();
     m_font.setFamily("Noto Mono");
+    m_font.setPixelSize((m_dpi * 9) / 72);
+
+    QFontMetrics fm(m_font);
+    m_fixedW = fm.horizontalAdvance("▲ 999.9 MB/s") + 8;
 
     m_upLabel = new QLabel(this);
     m_downLabel = new QLabel(this);
@@ -36,7 +41,6 @@ MainWidget::~MainWidget() = default;
 void MainWidget::updateSpeed(const NetSpeedInfo &info, Dock::Position position)
 {
     m_position = position;
-    m_font.setPixelSize((m_dpi * 9) / 72);
     m_upLabel->setFont(m_font);
     m_downLabel->setFont(m_font);
 
@@ -54,6 +58,11 @@ void MainWidget::updateSpeed(const NetSpeedInfo &info, Dock::Position position)
     updateGeometry();
 }
 
+int MainWidget::fixedWidth() const
+{
+    return m_fixedW;
+}
+
 QSize MainWidget::sizeHint() const
 {
     if (!m_upLabel || !m_downLabel) {
@@ -61,16 +70,7 @@ QSize MainWidget::sizeHint() const
     }
 
     QFontMetrics fm(m_font);
-    int upW = fm.horizontalAdvance(m_upLabel->text());
-    int downW = fm.horizontalAdvance(m_downLabel->text());
     int lineH = fm.height();
 
-    int maxW = qMax(upW, downW);
-    int totalH = lineH * 2;
-
-    if (m_position == Dock::Top || m_position == Dock::Bottom) {
-        return QSize(maxW + 12, totalH + 4);
-    } else {
-        return QSize(maxW + 16, totalH + 4);
-    }
+    return QSize(fixedWidth(), lineH * 2 + 4);
 }
