@@ -26,6 +26,7 @@ private:
     QBoxLayout *m_layout;
     QFont m_font;
     int m_dpi;
+    Dock::Position m_position;
 };
 
 #endif
