@@ -23,13 +23,16 @@ public:
 private:
     void parseSpeed(const QString &speed, QString &num, QString &unit) const;
 
+    QLabel *m_upArrow;
     QLabel *m_upNum;
     QLabel *m_upUnit;
+    QLabel *m_downArrow;
     QLabel *m_downNum;
     QLabel *m_downUnit;
     QGridLayout *m_layout;
     QFont m_font;
     int m_dpi;
+    int m_arrowWidth;
     int m_numWidth;
     Dock::Position m_position;
 };
