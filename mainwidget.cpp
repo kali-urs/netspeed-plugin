@@ -12,15 +12,14 @@ MainWidget::MainWidget(Dock::Position position)
     , m_layout(nullptr)
     , m_arrowWidth(0)
     , m_numWidth(0)
+    , m_scale(100)
     , m_position(position)
 {
     m_dpi = QApplication::primaryScreen()->logicalDotsPerInch();
     m_font.setFamily("Noto Mono");
-    m_font.setPixelSize((m_dpi * 9) / 72);
 
-    QFontMetrics fm(m_font);
-    m_arrowWidth = fm.horizontalAdvance("↑") + 2;
-    m_numWidth = fm.horizontalAdvance("999.9") + 2;
+    applyScale();
+    recalcFixedWidths();
 
     m_upArrow = new QLabel(this);
     m_upNum = new QLabel(this);
@@ -69,6 +68,40 @@ MainWidget::MainWidget(Dock::Position position)
 }
 
 MainWidget::~MainWidget() = default;
+
+void MainWidget::applyScale()
+{
+    int pixelSize = qMax(6, (m_dpi * 9 * m_scale) / (72 * 100));
+    m_font.setPixelSize(pixelSize);
+}
+
+void MainWidget::recalcFixedWidths()
+{
+    QFontMetrics fm(m_font);
+    m_arrowWidth = fm.horizontalAdvance("↑") + 2;
+    m_numWidth = fm.horizontalAdvance("999.9") + 2;
+
+    if (m_upArrow) {
+        m_upArrow->setFixedWidth(m_arrowWidth);
+        m_downArrow->setFixedWidth(m_arrowWidth);
+        m_upNum->setFixedWidth(m_numWidth);
+        m_downNum->setFixedWidth(m_numWidth);
+        m_upArrow->setFont(m_font);
+        m_upNum->setFont(m_font);
+        m_upUnit->setFont(m_font);
+        m_downArrow->setFont(m_font);
+        m_downNum->setFont(m_font);
+        m_downUnit->setFont(m_font);
+    }
+}
+
+void MainWidget::setScale(int scale)
+{
+    m_scale = qBound(50, scale, 200);
+    applyScale();
+    recalcFixedWidths();
+    updateGeometry();
+}
 
 void MainWidget::parseSpeed(const QString &speed, QString &num, QString &unit) const
 {

@@ -43,6 +43,7 @@ private slots:
 
 private:
     QString formatSpeed(unsigned long bytes);
+    void applyScale(int scale);
 
     QTimer *m_refreshTimer;
     MainWidget *m_mainWidget;
@@ -52,6 +53,7 @@ private:
     unsigned long m_curRx, m_curTx;
     NetSpeedInfo m_info;
 
+    int m_scale;
     Dock::Position m_position;
 };
 

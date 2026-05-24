@@ -16,6 +16,7 @@ NetSpeedPlugin::NetSpeedPlugin(QObject *parent)
     , m_oldTx(0)
     , m_curRx(0)
     , m_curTx(0)
+    , m_scale(100)
     , m_position(Dock::Bottom)
 {
 }
@@ -50,6 +51,8 @@ void NetSpeedPlugin::init(PluginProxyInterface *proxyInter)
     m_tipsWidget = new QLabel;
 
     m_position = position();
+    m_scale = m_proxyInter->getValue(this, "scale", 100).toInt();
+    m_mainWidget->setScale(m_scale);
 
     if (!pluginIsDisable()) {
         m_proxyInter->itemAdded(this, pluginName());
@@ -111,6 +114,18 @@ const QString NetSpeedPlugin::itemContextMenu(const QString &itemKey)
 
     QList<QVariant> items;
 
+    QMap<QString, QVariant> enlarge;
+    enlarge["itemId"] = "enlarge";
+    enlarge["itemText"] = "放大";
+    enlarge["isActive"] = true;
+    items.append(enlarge);
+
+    QMap<QString, QVariant> shrink;
+    shrink["itemId"] = "shrink";
+    shrink["itemText"] = "缩小";
+    shrink["isActive"] = true;
+    items.append(shrink);
+
     QMap<QString, QVariant> refresh;
     refresh["itemId"] = "refresh";
     refresh["itemText"] = "刷新";
@@ -132,6 +147,12 @@ void NetSpeedPlugin::invokedMenuItem(const QString &itemKey, const QString &menu
     if (menuId == "refresh") {
         m_oldRx = 0;
         m_oldTx = 0;
+    } else if (menuId == "enlarge") {
+        m_scale = qMin(m_scale + 10, 200);
+        applyScale(m_scale);
+    } else if (menuId == "shrink") {
+        m_scale = qMax(m_scale - 10, 50);
+        applyScale(m_scale);
     }
 }
 
@@ -212,4 +233,13 @@ void NetSpeedPlugin::refreshInfo()
     }
 
     m_proxyInter->itemUpdate(this, pluginName());
+}
+
+void NetSpeedPlugin::applyScale(int scale)
+{
+    m_scale = scale;
+    m_proxyInter->saveValue(this, "scale", m_scale);
+    if (m_mainWidget) {
+        m_mainWidget->setScale(m_scale);
+    }
 }
