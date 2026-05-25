@@ -1,0 +1,23 @@
+Source: dde-dock-netspeed-plugin
+Maintainer: kali-urs <kali-urs@users.noreply.github.com>
+Section: utils
+Priority: optional
+Build-Depends:
+ cmake,
+ debhelper-compat (= 13),
+ qt6-base-dev,
+ libdtk6core-dev,
+ libdtk6gui-dev,
+ dde-tray-loader-dev,
+ pkg-config
+Standards-Version: 4.6.2
+Homepage: https://github.com/kali-urs/netspeed-plugin
+
+Package: dde-dock-netspeed-plugin
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends},
+ dde-tray-loader
+Description: Real-time network speed monitor plugin for deepin 25 dock
+ 深度 25 任务栏实时网速插件，显示上行/下行速度。
+ Supports ↑↓ arrow display with fixed-width layout, no jitter.
+ Adjustable font size via right-click menu.

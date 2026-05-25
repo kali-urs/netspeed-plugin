@@ -1,0 +1,8 @@
+dde-dock-netspeed-plugin (1.1.0) stable; urgency=medium
+
+  * Initial release for deepin 25
+  * Real-time upload/download speed display
+  * Fixed-width layout with ↑↓ arrows
+  * Adjustable font size via right-click menu
+
+ -- kali-urs <kali-urs@users.noreply.github.com>  Mon, 25 May 2026 10:00:00 +0800
