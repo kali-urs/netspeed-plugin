@@ -21,7 +21,7 @@ jobs:
           apt-get update
           apt-get install -y build-essential cmake qt6-base-dev \
             libdtk6core-dev libdtk6gui-dev libdtk6widget-dev \
-            dde-tray-loader-dev pkg-config debhelper
+            dde-tray-loader-dev libglib2.0-bin pkg-config debhelper
           rm -rf /var/lib/apt/lists/*
 
       - name: Checkout code
