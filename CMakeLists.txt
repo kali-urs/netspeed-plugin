@@ -53,7 +53,14 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
 
 
 install(TARGETS ${PROJECT_NAME}
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}/dde-dock/plugins
+    LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/dde-dock/plugins
 )
 install(FILES ${CMAKE_SOURCE_DIR}/netspeed.json
-    DESTINATION ${CMAKE_INSTALL_DATADIR}/dde-dock/plugins)
+    DESTINATION ${CMAKE_INSTALL_DATADIR}/dde-dock/plugins
+)
+install(FILES ${CMAKE_SOURCE_DIR}/resources/gschema/com.deepin.dde.dock.module.netspeed-monitor.gschema.xml
+    DESTINATION ${CMAKE_INSTALL_DATADIR}/glib-2.0/schemas
+)
+install(FILES ${CMAKE_SOURCE_DIR}/resources/icons/netspeed-monitor.svg
+    DESTINATION ${CMAKE_INSTALL_DATADIR}/dde-dock/icons/dcc-setting
+)
