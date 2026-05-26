@@ -1,5 +1,11 @@
-dde-dock-netspeed-plugin (102.0.0) stable; urgency=medium
+dde-dock-netspeed-plugin (1.4.0) stable; urgency=medium
 
-  * Test release v4 — 修复 killall 未执行 (全路径+无延迟)
+  * Full auto-update via GitHub Releases API
+  * Detect new version on startup and via right-click menu
+  * QMessageBox confirmation dialog before update
+  * Download .deb in background with progress notification
+  * Install via pkexec + dpkg (polkit authorization dialog)
+  * Auto-restart dde-shell after successful installation
+  * Show current version in right-click menu
 
- -- kali-urs <kali-urs@users.noreply.github.com>  Tue, 26 May 2026 23:30:00 +0800
+ -- kali-urs <kali-urs@users.noreply.github.com>  Wed, 27 May 2026 00:00:00 +0800

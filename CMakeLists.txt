@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.12)
 
 project(dde-dock-netspeed-plugin)
 
-set(VERSION 102.0.0)
+set(VERSION 1.4.0)
 set(PLUGIN_NAME "netspeed-monitor")
 
 set(CMAKE_CXX_STANDARD 17)
