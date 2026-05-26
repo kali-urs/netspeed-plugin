@@ -1,8 +1,8 @@
-dde-dock-netspeed-plugin (1.1.0) stable; urgency=medium
+dde-dock-netspeed-plugin (1.2.0) stable; urgency=medium
 
-  * Initial release for deepin 25
-  * Real-time upload/download speed display
-  * Fixed-width layout with ↑↓ arrows
-  * Adjustable font size via right-click menu
+  * Add auto-update check via GitHub Releases API
+  * Right-click menu shows current version
+  * Notify on startup when new version available
+  * Deepin notification center integration
 
- -- kali-urs <kali-urs@users.noreply.github.com>  Mon, 25 May 2026 10:00:00 +0800
+ -- kali-urs <kali-urs@users.noreply.github.com>  Tue, 26 May 2026 18:00:00 +0800

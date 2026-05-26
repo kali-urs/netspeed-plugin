@@ -5,6 +5,8 @@
 #include <QTimer>
 #include <QLabel>
 #include <QSettings>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
 #include <pluginsiteminterface.h>
 #include "type.h"
 
@@ -41,14 +43,20 @@ public:
 
 private slots:
     void refreshInfo();
+    void checkUpdate();
 
 private:
     QString formatSpeed(unsigned long bytes);
     void applyScale(int scale);
+    QString currentVersion() const;
+    void notifyUpdate(const QString &latestVersion);
+    void notifyNoUpdate();
 
     QTimer *m_refreshTimer;
     MainWidget *m_mainWidget;
     QLabel *m_tipsWidget;
+    QNetworkAccessManager *m_network;
+    bool m_updating;
 
     unsigned long m_oldRx, m_oldTx;
     unsigned long m_curRx, m_curTx;

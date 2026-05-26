@@ -6,8 +6,13 @@
 #include <QJsonArray>
 #include <QStandardPaths>
 #include <QDir>
+#include <QDBusInterface>
+#include <QDBusConnection>
+#include <QUrl>
+#include <QNetworkRequest>
 
 static constexpr char kPluginStateKey[] = "enable";
+static constexpr char kUpdateCheckUrl[] = "https://api.github.com/repos/kali-urs/netspeed-plugin/releases/latest";
 
 static QSettings settings()
 {
@@ -17,11 +22,24 @@ static QSettings settings()
     return QSettings(dir + QStringLiteral("/settings.conf"), QSettings::IniFormat);
 }
 
+static void notify(const QString &title, const QString &body)
+{
+    QDBusInterface("org.deepin.dde.Notification1",
+                   "/org/deepin/dde/Notification1",
+                   "org.deepin.dde.Notification1",
+                   QDBusConnection::sessionBus())
+        .call("Notify", "dde-dock-netspeed-plugin", 0,
+              "netspeed-monitor", title, body,
+              QStringList(), QVariantMap(), 5000);
+}
+
 NetSpeedPlugin::NetSpeedPlugin(QObject *parent)
     : QObject(parent)
     , m_refreshTimer(new QTimer(this))
     , m_mainWidget(nullptr)
     , m_tipsWidget(nullptr)
+    , m_network(new QNetworkAccessManager(this))
+    , m_updating(false)
     , m_oldRx(0)
     , m_oldTx(0)
     , m_curRx(0)
@@ -70,6 +88,8 @@ void NetSpeedPlugin::init(PluginProxyInterface *proxyInter)
 
     m_refreshTimer->start(1000);
     connect(m_refreshTimer, &QTimer::timeout, this, &NetSpeedPlugin::refreshInfo, Qt::QueuedConnection);
+
+    QTimer::singleShot(5000, this, &NetSpeedPlugin::checkUpdate);
 }
 
 QWidget *NetSpeedPlugin::itemWidget(const QString &itemKey)
@@ -143,6 +163,12 @@ const QString NetSpeedPlugin::itemContextMenu(const QString &itemKey)
     refresh["isActive"] = true;
     items.append(refresh);
 
+    QMap<QString, QVariant> checkUpdate;
+    checkUpdate["itemId"] = "check_update";
+    checkUpdate["itemText"] = QString("检查更新 (v%1)").arg(currentVersion());
+    checkUpdate["isActive"] = true;
+    items.append(checkUpdate);
+
     QMap<QString, QVariant> menu;
     menu["items"] = items;
     menu["checkableMenu"] = false;
@@ -164,6 +190,8 @@ void NetSpeedPlugin::invokedMenuItem(const QString &itemKey, const QString &menu
     } else if (menuId == "shrink") {
         m_scale = qMax(m_scale - 10, 50);
         applyScale(m_scale);
+    } else if (menuId == "check_update") {
+        checkUpdate();
     }
 }
 
@@ -183,6 +211,68 @@ void NetSpeedPlugin::positionChanged(const Dock::Position position)
 PluginsItemInterface::PluginSizePolicy NetSpeedPlugin::pluginSizePolicy() const
 {
     return PluginSizePolicy::Custom;
+}
+
+QString NetSpeedPlugin::currentVersion() const
+{
+    return QStringLiteral(VERSION);
+}
+
+void NetSpeedPlugin::checkUpdate()
+{
+    if (m_updating)
+        return;
+    m_updating = true;
+
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+    QNetworkRequest req;
+    req.setUrl(QUrl(kUpdateCheckUrl));
+    req.setRawHeader("Accept", "application/json");
+    req.setRawHeader("User-Agent", "dde-dock-netspeed-plugin/" VERSION);
+    req.setAttribute(QNetworkRequest::RedirectPolicyAttribute,
+                     QNetworkRequest::NoLessSafeRedirectPolicy);
+#else
+    QNetworkRequest req(QUrl(kUpdateCheckUrl));
+    req.setRawHeader("Accept", "application/json");
+    req.setRawHeader("User-Agent", "dde-dock-netspeed-plugin/" VERSION);
+#endif
+
+    QNetworkReply *reply = m_network->get(req);
+    connect(reply, &QNetworkReply::finished, this, [this, reply]() {
+        reply->deleteLater();
+        m_updating = false;
+
+        if (reply->error() != QNetworkReply::NoError) {
+            notify("检查更新失败", reply->errorString());
+            return;
+        }
+
+        QJsonDocument doc = QJsonDocument::fromJson(reply->readAll());
+        QString latestVer = doc.object().value("tag_name").toString().remove('v');
+
+        if (latestVer.isEmpty()) {
+            notify("检查更新失败", "无法获取最新版本信息");
+            return;
+        }
+
+        if (latestVer == currentVersion()) {
+            notifyNoUpdate();
+        } else {
+            notifyUpdate(latestVer);
+        }
+    });
+}
+
+void NetSpeedPlugin::notifyUpdate(const QString &latestVersion)
+{
+    notify("发现新版本",
+           QString("当前: v%1\n最新: v%2\n请前往 GitHub 下载更新")
+               .arg(currentVersion(), latestVersion));
+}
+
+void NetSpeedPlugin::notifyNoUpdate()
+{
+    notify("已是最新版本", QString("当前版本: v%1").arg(currentVersion()));
 }
 
 QString NetSpeedPlugin::formatSpeed(unsigned long bytes)
