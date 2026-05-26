@@ -12,6 +12,7 @@
 #include <QNetworkRequest>
 #include <QProcess>
 #include <QMessageBox>
+#include <QAbstractButton>
 
 static constexpr char kPluginStateKey[] = "enable";
 static constexpr char kUpdateCheckUrl[] = "https://api.github.com/repos/kali-urs/netspeed-plugin/releases/latest";
