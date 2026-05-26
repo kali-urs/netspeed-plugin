@@ -367,16 +367,17 @@ void NetSpeedPlugin::installPackage()
                        .arg(m_downloadVersion);
 
     QProcess *proc = new QProcess(this);
-    QStringList args = {path};
 
     connect(proc, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
             this, [this, proc, path](int exitCode, QProcess::ExitStatus status) {
                 proc->deleteLater();
 
                 if (status == QProcess::CrashExit || exitCode != 0) {
+                    QString errMsg = QString::fromUtf8(proc->readAllStandardError());
                     notify("安装失败",
-                           QString("deepin-deb-installer 退出码: %1\n可手动安装: %2")
+                           QString("退出码: %1\n%2\n可手动安装: %3")
                                .arg(exitCode)
+                               .arg(errMsg.trimmed())
                                .arg(path));
                     return;
                 }
@@ -386,7 +387,9 @@ void NetSpeedPlugin::installPackage()
                            .arg(m_downloadVersion));
             });
 
-    proc->start("deepin-deb-installer", args);
+    proc->start("pkexec",
+                {"env", "DEBIAN_FRONTEND=noninteractive",
+                 "dpkg", "-i", path});
 }
 
 void NetSpeedPlugin::notifyNoUpdate()
