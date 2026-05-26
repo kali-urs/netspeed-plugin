@@ -383,8 +383,12 @@ void NetSpeedPlugin::installPackage()
                 }
 
                 notify("更新完成",
-                       QString("v%1 安装成功！请重启 dde-shell 生效。")
+                       QString("v%1 安装成功，正在重启任务栏...")
                            .arg(m_downloadVersion));
+
+                QTimer::singleShot(1500, this, []() {
+                    QProcess::startDetached("killall", {"dde-shell"});
+                });
             });
 
     proc->start("pkexec",
