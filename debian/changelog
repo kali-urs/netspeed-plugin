@@ -1,5 +1,5 @@
-dde-dock-netspeed-plugin (101.0.0) stable; urgency=medium
+dde-dock-netspeed-plugin (102.0.0) stable; urgency=medium
 
-  * Test release v3 — 安装完成自动重启 dde-shell
+  * Test release v4 — 修复 killall 未执行 (全路径+无延迟)
 
- -- kali-urs <kali-urs@users.noreply.github.com>  Tue, 26 May 2026 23:00:00 +0800
+ -- kali-urs <kali-urs@users.noreply.github.com>  Tue, 26 May 2026 23:30:00 +0800

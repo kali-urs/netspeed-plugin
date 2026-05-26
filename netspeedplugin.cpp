@@ -386,9 +386,8 @@ void NetSpeedPlugin::installPackage()
                        QString("v%1 安装成功，正在重启任务栏...")
                            .arg(m_downloadVersion));
 
-                QTimer::singleShot(1500, this, []() {
-                    QProcess::startDetached("killall", {"dde-shell"});
-                });
+                QProcess::startDetached("/usr/bin/killall",
+                                        {"dde-shell"});
             });
 
     proc->start("pkexec",
