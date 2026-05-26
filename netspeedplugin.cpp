@@ -4,8 +4,18 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
+#include <QStandardPaths>
+#include <QDir>
 
 static constexpr char kPluginStateKey[] = "enable";
+
+static QSettings settings()
+{
+    QString dir = QStandardPaths::writableLocation(QStandardPaths::ConfigLocation)
+                  + QStringLiteral("/dde-dock-netspeed-plugin");
+    QDir().mkpath(dir);
+    return QSettings(dir + QStringLiteral("/settings.conf"), QSettings::IniFormat);
+}
 
 NetSpeedPlugin::NetSpeedPlugin(QObject *parent)
     : QObject(parent)
@@ -51,7 +61,7 @@ void NetSpeedPlugin::init(PluginProxyInterface *proxyInter)
     m_tipsWidget = new QLabel;
 
     m_position = position();
-    m_scale = m_proxyInter->getValue(this, "scale", 100).toInt();
+    m_scale = settings().value("scale", 100).toInt();
     m_mainWidget->setScale(m_scale);
 
     if (!pluginIsDisable()) {
@@ -93,13 +103,14 @@ bool NetSpeedPlugin::pluginIsAllowDisable()
 
 bool NetSpeedPlugin::pluginIsDisable()
 {
-    return !m_proxyInter->getValue(this, kPluginStateKey, true).toBool();
+    return !settings().value(kPluginStateKey, true).toBool();
 }
 
 void NetSpeedPlugin::pluginStateSwitched()
 {
     const bool disabledNew = !pluginIsDisable();
-    m_proxyInter->saveValue(this, kPluginStateKey, !disabledNew);
+    QSettings s = settings();
+    s.setValue(kPluginStateKey, !disabledNew);
 
     if (disabledNew) {
         m_proxyInter->itemRemoved(this, pluginName());
@@ -238,7 +249,8 @@ void NetSpeedPlugin::refreshInfo()
 void NetSpeedPlugin::applyScale(int scale)
 {
     m_scale = scale;
-    m_proxyInter->saveValue(this, "scale", m_scale);
+    QSettings s = settings();
+    s.setValue("scale", m_scale);
     if (m_mainWidget) {
         m_mainWidget->setScale(m_scale);
     }

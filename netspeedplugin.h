@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QTimer>
 #include <QLabel>
+#include <QSettings>
 #include <pluginsiteminterface.h>
 #include "type.h"
 
