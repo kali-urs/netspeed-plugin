@@ -1,8 +1,9 @@
-dde-dock-netspeed-plugin (1.2.0) stable; urgency=medium
+dde-dock-netspeed-plugin (1.3.0) stable; urgency=medium
 
-  * Add auto-update check via GitHub Releases API
-  * Right-click menu shows current version
-  * Notify on startup when new version available
-  * Deepin notification center integration
+  * Full auto-update: detect → dialog → download → install
+  * QMessageBox confirmation dialog for update
+  * Download .deb from GitHub Releases via QNetworkAccessManager
+  * Progress notifications every 10%
+  * Install via deepin-deb-installer
 
- -- kali-urs <kali-urs@users.noreply.github.com>  Tue, 26 May 2026 18:00:00 +0800
+ -- kali-urs <kali-urs@users.noreply.github.com>  Tue, 26 May 2026 20:00:00 +0800

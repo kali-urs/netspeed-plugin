@@ -10,6 +10,8 @@
 #include <QDBusConnection>
 #include <QUrl>
 #include <QNetworkRequest>
+#include <QProcess>
+#include <QMessageBox>
 
 static constexpr char kPluginStateKey[] = "enable";
 static constexpr char kUpdateCheckUrl[] = "https://api.github.com/repos/kali-urs/netspeed-plugin/releases/latest";
@@ -39,6 +41,9 @@ NetSpeedPlugin::NetSpeedPlugin(QObject *parent)
     , m_mainWidget(nullptr)
     , m_tipsWidget(nullptr)
     , m_network(new QNetworkAccessManager(this))
+    , m_downloadReply(nullptr)
+    , m_downloadFile(nullptr)
+    , m_lastProgress(0)
     , m_updating(false)
     , m_oldRx(0)
     , m_oldTx(0)
@@ -59,6 +64,7 @@ NetSpeedPlugin::~NetSpeedPlugin()
         m_tipsWidget->deleteLater();
         m_tipsWidget = nullptr;
     }
+    abortDownload();
 }
 
 const QString NetSpeedPlugin::pluginDisplayName() const
@@ -258,21 +264,147 @@ void NetSpeedPlugin::checkUpdate()
         if (latestVer == currentVersion()) {
             notifyNoUpdate();
         } else {
-            notifyUpdate(latestVer);
+            confirmAndUpdate(latestVer);
         }
     });
 }
 
-void NetSpeedPlugin::notifyUpdate(const QString &latestVersion)
+void NetSpeedPlugin::confirmAndUpdate(const QString &latestVersion)
 {
-    notify("发现新版本",
-           QString("当前: v%1\n最新: v%2\n请前往 GitHub 下载更新")
-               .arg(currentVersion(), latestVersion));
+    QMessageBox msgBox(m_mainWidget);
+    msgBox.setIcon(QMessageBox::Information);
+    msgBox.setWindowTitle("发现新版本");
+    msgBox.setText(QString("当前版本: v%1\n最新版本: v%2\n\n是否下载并安装更新？")
+                       .arg(currentVersion(), latestVersion));
+    msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+    msgBox.setDefaultButton(QMessageBox::Yes);
+    if (auto *btn = msgBox.button(QMessageBox::Yes))
+        btn->setText("下载更新");
+    if (auto *btn = msgBox.button(QMessageBox::No))
+        btn->setText("取消");
+
+    if (msgBox.exec() != QMessageBox::Yes)
+        return;
+
+    m_downloadVersion = latestVersion;
+    QString debUrl = QString(
+        "https://github.com/kali-urs/netspeed-plugin/releases/download/"
+        "v%1/dde-dock-netspeed-plugin_%1_amd64.deb")
+                         .arg(latestVersion);
+    startDownload(debUrl);
+}
+
+void NetSpeedPlugin::startDownload(const QString &url)
+{
+    QString tmpPath = QString("/tmp/dde-dock-netspeed-plugin_%1_amd64.deb")
+                          .arg(m_downloadVersion);
+    m_downloadFile = new QFile(tmpPath, this);
+    if (!m_downloadFile->open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+        notify("下载失败", "无法创建临时文件");
+        return;
+    }
+
+    QNetworkRequest req;
+    req.setUrl(QUrl(url));
+    req.setRawHeader("User-Agent", "dde-dock-netspeed-plugin/" VERSION);
+    req.setAttribute(QNetworkRequest::RedirectPolicyAttribute,
+                     QNetworkRequest::NoLessSafeRedirectPolicy);
+
+    m_downloadReply = m_network->get(req);
+    connect(m_downloadReply, &QNetworkReply::readyRead, this, [this]() {
+        m_downloadFile->write(m_downloadReply->readAll());
+    });
+    connect(m_downloadReply, &QNetworkReply::downloadProgress,
+            this, &NetSpeedPlugin::onDownloadProgress);
+    connect(m_downloadReply, &QNetworkReply::finished,
+            this, &NetSpeedPlugin::onDownloadFinished);
+
+    notify("开始下载",
+           QString("正在下载 v%1 更新...").arg(m_downloadVersion));
+}
+
+void NetSpeedPlugin::onDownloadProgress(qint64 received, qint64 total)
+{
+    if (total <= 0)
+        return;
+    int percent = static_cast<int>(received * 100 / total);
+    if (percent - m_lastProgress >= 10 || percent == 100) {
+        m_lastProgress = percent;
+        notify(QString("下载更新 %1%").arg(percent),
+               QString("v%1 (%2 / %3 KB)")
+                   .arg(m_downloadVersion)
+                   .arg(received / 1024)
+                   .arg(total / 1024));
+    }
+}
+
+void NetSpeedPlugin::onDownloadFinished()
+{
+    m_downloadFile->flush();
+    m_downloadFile->close();
+
+    if (m_downloadReply->error() != QNetworkReply::NoError) {
+        notify("下载失败", m_downloadReply->errorString());
+        m_downloadFile->remove();
+        m_downloadFile->deleteLater();
+        m_downloadFile = nullptr;
+        m_downloadReply->deleteLater();
+        m_downloadReply = nullptr;
+        return;
+    }
+
+    m_downloadReply->deleteLater();
+    m_downloadReply = nullptr;
+
+    notify("下载完成", QString("v%1 已下载，正在安装...").arg(m_downloadVersion));
+    installPackage();
+}
+
+void NetSpeedPlugin::installPackage()
+{
+    QString path = QString("/tmp/dde-dock-netspeed-plugin_%1_amd64.deb")
+                       .arg(m_downloadVersion);
+
+    QProcess *proc = new QProcess(this);
+    QStringList args = {path};
+
+    connect(proc, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
+            this, [this, proc, path](int exitCode, QProcess::ExitStatus status) {
+                proc->deleteLater();
+
+                if (status == QProcess::CrashExit || exitCode != 0) {
+                    notify("安装失败",
+                           QString("deepin-deb-installer 退出码: %1\n可手动安装: %2")
+                               .arg(exitCode)
+                               .arg(path));
+                    return;
+                }
+
+                notify("更新完成",
+                       QString("v%1 安装成功！请重启 dde-shell 生效。")
+                           .arg(m_downloadVersion));
+            });
+
+    proc->start("deepin-deb-installer", args);
 }
 
 void NetSpeedPlugin::notifyNoUpdate()
 {
     notify("已是最新版本", QString("当前版本: v%1").arg(currentVersion()));
+}
+
+void NetSpeedPlugin::abortDownload()
+{
+    if (m_downloadReply) {
+        m_downloadReply->abort();
+        m_downloadReply->deleteLater();
+        m_downloadReply = nullptr;
+    }
+    if (m_downloadFile) {
+        m_downloadFile->remove();
+        m_downloadFile->deleteLater();
+        m_downloadFile = nullptr;
+    }
 }
 
 QString NetSpeedPlugin::formatSpeed(unsigned long bytes)

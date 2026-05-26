@@ -7,6 +7,7 @@
 #include <QSettings>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
+#include <QFile>
 #include <pluginsiteminterface.h>
 #include "type.h"
 
@@ -44,18 +45,28 @@ public:
 private slots:
     void refreshInfo();
     void checkUpdate();
+    void confirmAndUpdate(const QString &latestVersion);
+    void startDownload(const QString &url);
+    void onDownloadProgress(qint64 received, qint64 total);
+    void onDownloadFinished();
+    void installPackage();
+    void abortDownload();
 
 private:
     QString formatSpeed(unsigned long bytes);
     void applyScale(int scale);
     QString currentVersion() const;
-    void notifyUpdate(const QString &latestVersion);
     void notifyNoUpdate();
 
     QTimer *m_refreshTimer;
     MainWidget *m_mainWidget;
     QLabel *m_tipsWidget;
     QNetworkAccessManager *m_network;
+
+    QNetworkReply *m_downloadReply;
+    QFile *m_downloadFile;
+    QString m_downloadVersion;
+    int m_lastProgress;
     bool m_updating;
 
     unsigned long m_oldRx, m_oldTx;
